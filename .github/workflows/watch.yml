@@ -1,0 +1,50 @@
+name: NVIDIA job watcher
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"   # every 30 minutes (GitHub may delay scheduled runs at busy times)
+  workflow_dispatch:          # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write             # needed to commit seen_jobs.json back to the repo
+
+concurrency:
+  group: nvidia-job-watcher
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Check for new postings
+        env:
+          SEARCH_TERMS: ${{ vars.SEARCH_TERMS }}
+          LOCATION_KEYWORDS: ${{ vars.LOCATION_KEYWORDS }}
+          MAX_PAGES: ${{ vars.MAX_PAGES || '5' }}
+          STATE_FILE: seen_jobs.json
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python nvidia_job_watcher.py --once
+
+      - name: Save seen jobs
+        run: |
+          if [ -n "$(git status --porcelain seen_jobs.json)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add seen_jobs.json
+            git commit -m "Update seen jobs [skip ci]"
+            git push
+          else
+            echo "No changes to seen jobs."
+          fi
