@@ -95,6 +95,7 @@ def fetch_jobs(search_text: str) -> list[dict]:
     """Fetch up to MAX_PAGES pages of postings for one search term."""
     jobs: list[dict] = []
     session = requests.Session()
+    total = None
     for page in range(MAX_PAGES):
         payload = {
             "appliedFacets": {},
@@ -118,8 +119,9 @@ def fetch_jobs(search_text: str) -> list[dict]:
         data = resp.json()
         postings = data.get("jobPostings", [])
         jobs.extend(postings)
-        total = data.get("total", 0)
-        if not postings or (page + 1) * PAGE_SIZE >= total:
+        # Workday only reports "total" on the first page; later pages return 0
+        total = total or data.get("total") or None
+        if not postings or (total and (page + 1) * PAGE_SIZE >= total):
             break
         time.sleep(1)  # be polite
     return jobs
