@@ -1,6 +1,6 @@
 # Job Posting Watcher
 
-Checks NVIDIA's careers site every 30 minutes with GitHub Actions and sends an alert to Discord or Telegram when new postings appear.
+Checks NVIDIA's careers site twice a day (around 8 AM and 8 PM Pacific) with GitHub Actions and sends an alert to Discord or Telegram when new postings appear.
 
 ## Setup
 

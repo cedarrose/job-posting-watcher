@@ -2,7 +2,7 @@ name: NVIDIA job watcher
 
 on:
   schedule:
-    - cron: "*/30 * * * *"   # every 30 minutes (GitHub may delay scheduled runs at busy times)
+    - cron: "7 3,15 * * *"     # twice a day: ~8 AM and ~8 PM Pacific (7 AM/7 PM in winter); times are UTC
   workflow_dispatch:          # lets you run it manually from the Actions tab
 
 permissions:
